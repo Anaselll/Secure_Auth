@@ -7,6 +7,7 @@ import Register from "../auth/register/register.jsx";
 import Login from "../auth/login/login.jsx";
 import Forget from "../auth/forget/forget.jsx";
 import ResetPassword from "../auth/reset/sendreset.jsx";
+import EmailVerified from "../auth/register/successRegister.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -17,6 +18,7 @@ createRoot(document.getElementById("root")).render(
         <Route path="/auth/login" element={<Login />} />
         <Route path="/forget/password" element={<Forget />} />
         <Route path="/reset/password/:token" element={<ResetPassword />} />
+        <Route path="/register/success" element={<EmailVerified />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>

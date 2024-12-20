@@ -5,10 +5,15 @@ import transporter from "../config/nodemailer.js";
 import { generateToken,verifyToken } from "../utils/jwt.js";
 
 export async function register(req, res) {
-    console.log(1)
-  const { username, gmail, password } = req.body;
-  try {
+  
 
+  const { username, gmail, password } = req.body;
+  
+  try {
+     const user=await User.findOne({gmail})
+     if(user){
+      return res.status(400).json({message:"User already exists"})
+      }
 
     const token_verify = generateToken({username,gmail,password }, "1h");
     const verifyLink = `http://localhost:5000/auth/verifyEmail/${token_verify}`;
@@ -21,7 +26,7 @@ export async function register(req, res) {
 
     await transporter.sendMail(mailOptions);
     console.log("no erororkfpoe")
-
+    
     res.status(200).send({ message: "User successfully registered" });
   } catch (error) {
     console.log(1)
@@ -48,6 +53,7 @@ export const login = async (req, res) => {
     );
 
     user.refreshToken = refreshToken;
+    user.accessToken=accessToken
     await user.save();
 
     res.status(200).json({
@@ -59,6 +65,10 @@ export const login = async (req, res) => {
     res.status(500).send({ message: "Error while logging in", error });
   }
 };
+export const  SuccessReg=(req,res)=>{
+  return res.redirect("http://localhost:5173/register/success")
+
+}
 
 export const refreshToken = async (req, res) => {
   const { refreshToken } = req.body;
@@ -95,8 +105,9 @@ export const logout = async (req, res) => {
 
 export const forgetPassword = async (req, res) => {
   const { email } = req.body;
-
   try {
+   
+
     const user = await User.findOne({ gmail: email });
 
     if (!user) {
@@ -105,10 +116,9 @@ export const forgetPassword = async (req, res) => {
 
     const resetToken = generateToken({ id: user._id }, "1h");
     user.resetToken = resetToken;
-    user.resetTokenExpires = Date.now() + 3600000; // 1 hour from now
     await user.save();
 
-    const resetLink = `http://localhost:5000/verifyToken/reset/password/${resetToken}`;
+    const resetLink = `http://localhost:5000/auth/reset/password/index/${resetToken}`;
 
     await transporter.sendMail({
       from:"consoleone111111111@gmail.com",
@@ -126,8 +136,12 @@ export const forgetPassword = async (req, res) => {
       .json({ message: "Error while processing password reset", error });
   }
 };
-
-export const resetPassword = async (req, res) => {
+export const resetPasswordIndex=(req,res)=>{
+  const {token}=req.params;
+  return res.redirect(`http://localhost:5173/reset/password/${token}`);
+    
+}
+export const resetPasswordStore = async (req, res) => {
   const { token } = req.params;
   const { newPassword } = req.body;
 
@@ -170,13 +184,19 @@ export const verifyEmail=async(req,res)=>{
         }
       )
       await user_model.save()
-      res.status(200).json({ message: "Email verified" });
-      }else{
-        res.status(400).json({ message: "Email already verified" });
-      }
+            return res.redirect(
+              "http://localhost:5173/register/success?status=verified"
+            );
+
+      }else if (user.verifyEmail) {
+        res.status(400).json({ message: "Email already verified" });   return res.redirect(
+          "http://localhost:5173/register/success?status=already_verified"
+        );}
       
       } catch (error) {
-        res.status(400).json({message:"Error while verifying email",error});
+        return res.redirect(
+          "http://localhost:5173/register/success?status=failed"
+        );
         }
 
 }
